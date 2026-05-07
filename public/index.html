@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EOMS — E-Commerce Order Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET & VARIABLES ─────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0b0e17;
+  --surface:   #111622;
+  --card:      #161d2e;
+  --border:    #1e2a40;
+  --border2:   #253044;
+  --accent:    #4f8ef7;
+  --accent2:   #7c5af7;
+  --green:     #22d3a0;
+  --amber:     #f5a623;
+  --red:       #f05353;
+  --text:      #e2e8f4;
+  --muted:     #6a7a96;
+  --muted2:    #3a4a62;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --r:         10px;
+  --r2:        16px;
+  --shadow:    0 4px 24px rgba(0,0,0,.45);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ─── SIDEBAR ───────────────────────────────────── */
+.sidebar {
+  width: 230px;
+  min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-: 100;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-mark {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.sidebar-logo .logo-sub {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+.sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+.nav-section {
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--muted2);
+  font-family: var(--font-mono);
+  padding: 12px 20px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13.5px;
+  font-weight: 500;
+  border-left: 2px solid transparent;
+  transition: all .18s;
+  user-select: none;
+}
+.nav-item:hover { color: var(--text); background: rgba(79,142,247,.07); }
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(79,142,247,.10);
+}
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+.db-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.db-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+/* ─── MAIN CONTENT ──────────────────────────────── */
+.main {
+  margin-left: 230px;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.topbar {
+  height: 60px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-title {
+  font-family: var(--font-head);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+}
+.topbar-meta { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+.content { padding: 28px; flex: 1; }
+
+/* ─── PAGE / SECTION ────────────────────────────── */
+.page { display: none; animation: fadeIn .25s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page-title {
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+}
+.page-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+/* ─── STAT CARDS ────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+.stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.stat-card.blue::before   { background: var(--accent); }
+.stat-card.purple::before { background: var(--accent2); }
+.stat-card.green::before  { background: var(--green); }
+.stat-card.amber::before  { background: var(--amber); }
+.stat-card.red::before    { background: var(--red); }
+
+.stat-icon { font-size: 22px; margin-bottom: 12px; }
+.stat-value {
+  font-family: var(--font-head);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+/* ─── TABLES ────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.card-title {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  text-align: left;
+  padding: 11px 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  background: rgba(255,255,255,.02);
+}
+tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(79,142,247,.04); }
+tbody td { padding: 12px 16px; color: var(--text); vertical-align: middle; }
+.mono { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+/* ─── BADGES ────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+.badge-delivered, .badge-success  { background:rgba(34,211,160,.12); color:var(--green); }
+.badge-shipped, .badge-confirmed, .badge-in_transit { background:rgba(79,142,247,.12); color:var(--accent); }
+.badge-pending, .badge-not_shipped, .badge-ready-for-pickup { background:rgba(245,166,35,.12); color:var(--amber); }
+.badge-cancelled,.badge-failed,.badge-returned { background:rgba(240,83,83,.12); color:var(--red); }
+.badge-refunded { background:rgba(124,90,247,.12); color:var(--accent2); }
+
+/* ─── STARS ─────────────────────────────────────── */
+.stars { color: var(--amber); font-size: 13px; letter-spacing: 1px; }
+
+/* ─── BUTTONS ───────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--r);
+  border: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #3a7ae8; transform: translateY(-1px); }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-danger { background:var(--red); color:#fff; }
+
+/* ─── FORMS & MODAL ─────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--r2);
+  padding: 28px;
+  width: 480px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:none} }
+.modal-title {
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+}
+.form-control {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  transition: border-color .18s;
+  outline: none;
+}
+.form-control:focus { border-color: var(--accent); }
+.form-control::placeholder { color: var(--muted2); }
+select.form-control option { background: var(--card); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+/* ─── TOAST ─────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  animation: toastIn .2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error   { border-left: 3px solid var(--red); }
+@keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+
+/* ─── SEARCH BAR ────────────────────────────────── */
+.search-wrap { position: relative; }
+.search-wrap input {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 8px 14px 8px 36px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  width: 240px;
+  font-family: var(--font-body);
+  transition: border-color .18s;
+}
+.search-wrap input:focus { border-color: var(--accent); }
+.search-wrap .search-icon {
+  position: absolute;
+  left: 11px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ─── EMPTY STATE ────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .5; }
+.empty-text { font-size: 14px; }
+
+/* ─── LOADING ───────────────────────────────────── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--muted);
+  gap: 10px;
+  font-size: 13px;
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ─── SECTION GRID ──────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media(max-width:900px){ .grid-2{grid-template-columns:1fr} }
+
+/* ─── STATUS SELECT ─────────────────────────────── */
+.status-select {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--text);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  outline: none;
+}
+
+/* ─── MINI BAR CHART ─────────────────────────────── */
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.bar-label { font-size: 12px; color: var(--muted); width: 130px; truncate; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.bar-track { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:4px; background: linear-gradient(90deg,var(--accent),var(--accent2)); transition: width .6s ease; }
+.bar-val { font-size:11px; color:var(--muted); width:60px; text-align:right; font-family:var(--font-mono); }
+
+/* ─── ORDER DETAIL PANEL ─────────────────────────── */
+.detail-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  margin-top: 6px;
+}
+.detail-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.detail-field label { font-size: 10px; color: var(--muted); text-transform:uppercase; letter-spacing:.8px; font-family:var(--font-mono); display:block; margin-bottom:3px; }
+.detail-field span  { font-size: 13px; font-weight:500; }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ──────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">EOMS</div>
+    <div class="logo-sub">Order Management</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-section">Data</div>
+    <div class="nav-item" onclick="navigate('orders')">
+      <span class="icon">🛒</span> Orders
+    </div>
+    <div class="nav-item" onclick="navigate('customers')">
+      <span class="icon">👥</span> Customers
+    </div>
+    <div class="nav-item" onclick="navigate('products')">
+      <span class="icon">📦</span> Products
+    </div>
+    <div class="nav-item" onclick="navigate('reviews')">
+      <span class="icon">⭐</span> Reviews
+    </div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="navigate('analytics')">
+      <span class="icon">📈</span> Analytics
+    </div>
+    <div class="nav-item" onclick="navigate('shipments')">
+      <span class="icon">🚚</span> Shipments
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="db-status"><div class="db-dot"></div>ecommerce_oms</div>
+    <div>CSE2021 · DBMS Project</div>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────── -->
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-meta" id="topbar-meta">Loading...</div>
+  </header>
+  <div class="content">
+
+    <!-- ══ DASHBOARD ══════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Overview</div>
+          <div class="page-sub">Real-time database stats via MySQL views</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↺ Refresh</button>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="loading"><div class="spinner"></div>Loading stats…</div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🕐 Recent Orders</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody id="recent-orders-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📦 Top Products by Revenue</div></div>
+          <div style="padding:16px 20px" id="top-products-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ORDERS ═════════════════════════════════ -->
+    <div class="page" id="page-orders">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Orders</div>
+          <div class="page-sub">Manage all customer orders</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search orders…" oninput="filterTable('orders-tbody',this.value)"/>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-order')">＋ New Order</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Customer</th><th>Date</th><th>Amount</th><th>Payment</th><th>Shipment</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CUSTOMERS ══════════════════════════════ -->
+    <div class="page" id="page-customers">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Customers</div>
+          <div class="page-sub">Customer records from CUSTOMER table</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search customers…" oninput="filterTable('customers-tbody',this.value)"/>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-customer')">＋ Add Customer</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Lifetime Value</th><th>Joined</th></tr></thead>
+            <tbody id="customers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PRODUCTS ═══════════════════════════════ -->
+    <div class="page" id="page-products">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Products</div>
+          <div class="page-sub">Product catalogue with stock & rating</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search products…" oninput="filterTable('products-tbody',this.value)"/>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-product')">＋ Add Product</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Rating</th><th>Supplier</th></tr></thead>
+            <tbody id="products-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REVIEWS ════════════════════════════════ -->
+    <div class="page" id="page-reviews">
+      <div class="page-header">
+        <div><div class="page-title">Reviews</div><div class="page-sub">Customer product reviews & ratings</div></div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Customer</th><th>Product</th><th>Rating</th><th>Comment</th><th>Date</th></tr></thead>
+            <tbody id="reviews-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ANALYTICS ══════════════════════════════ -->
+    <div class="page" id="page-analytics">
+      <div class="page-header">
+        <div><div class="page-title">Analytics</div><div class="page-sub">Powered by MySQL Views</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📦 Product Performance (vw_product_performance)</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Sold</th><th>Rating</th></tr></thead>
+              <tbody id="perf-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">👥 Customer Summary (vw_customer_order_summary)</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Customer</th><th>Orders</th><th>Lifetime ₹</th></tr></thead>
+              <tbody id="custsum-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">💰 Monthly Revenue (vw_monthly_revenue)</div></div>
+        <div style="padding:20px" id="revenue-bars"></div>
+      </div>
+    </div>
+
+    <!-- ══ SHIPMENTS ═══════════════════════════════ -->
+    <div class="page" id="page-shipments">
+      <div class="page-header">
+        <div><div class="page-title">Active Shipments</div><div class="page-sub">From vw_pending_shipments view</div></div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Order Date</th><th>Amount</th><th>Carrier</th><th>Tracking</th><th>Shipment Status</th></tr></thead>
+            <tbody id="shipments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- ══ MODALS ══════════════════════════════════════ -->
+
+<!-- Add Customer -->
+<div class="modal-overlay" id="modal-customer">
+  <div class="modal">
+    <div class="modal-title">👤 Add New Customer</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        <input class="form-control" id="c-fname" placeholder="Aarav"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <input class="form-control" id="c-lname" placeholder="Sharma"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-control" id="c-email" type="email" placeholder="aarav@example.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input class="form-control" id="c-phone" placeholder="9810001111"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-customer')">Cancel</button>
+      <button class="btn btn-primary" onclick="addCustomer()">Add Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Product -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal">
+    <div class="modal-title">📦 Add New Product</div>
+    <div class="form-group">
+      <label class="form-label">Product Name</label>
+      <input class="form-control" id="p-name" placeholder="Samsung Galaxy S25"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <input class="form-control" id="p-desc" placeholder="Short description..."/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Price (₹)</label>
+        <input class="form-control" id="p-price" type="number" placeholder="59999"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock Qty</label>
+        <input class="form-control" id="p-stock" type="number" placeholder="100"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-control" id="p-category"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Supplier ID</label>
+        <input class="form-control" id="p-supplier" type="number" placeholder="1"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-product')">Cancel</button>
+      <button class="btn btn-primary" onclick="addProduct()">Add Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- Place Order -->
+<div class="modal-overlay" id="modal-order">
+  <div class="modal">
+    <div class="modal-title">🛒 Place New Order</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Customer ID</label>
+        <input class="form-control" id="o-cid" type="number" placeholder="1"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Product</label>
+        <select class="form-control" id="o-product"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <input class="form-control" id="o-qty" type="number" value="1" min="1"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Discount</label>
+        <select class="form-control" id="o-discount">
+          <option value="">— No Discount —</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Payment Method</label>
+      <select class="form-control" id="o-method">
+        <option value="UPI">UPI</option>
+        <option value="CARD">Card</option>
+        <option value="NETBANKING">Net Banking</option>
+        <option value="COD">Cash on Delivery</option>
+        <option value="WALLET">Wallet</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-order')">Cancel</button>
+      <button class="btn btn-primary" onclick="placeOrder()">Place Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = '/api';
+
+// ── Navigation ────────────────────────────────────
+const pageLoaders = {
+  dashboard: loadDashboard,
+  orders:    loadOrders,
+  customers: loadCustomers,
+  products:  loadProducts,
+  reviews:   loadReviews,
+  analytics: loadAnalytics,
+  shipments: loadShipments,
+};
+const pageTitles = {
+  dashboard: 'Dashboard', orders: 'Orders', customers: 'Customers',
+  products: 'Products', reviews: 'Reviews', analytics: 'Analytics', shipments: 'Shipments',
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`.nav-item[onclick="navigate('${page}')"]`).classList.add('active');
+  document.getElementById('topbar-title').textContent = pageTitles[page];
+  pageLoaders[page]?.();
+}
+
+// ── Fetch helper ──────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ── Toast ─────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Modal ─────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-order')   populateOrderModal();
+  if (id === 'modal-product') populateProductModal();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── Formatters ────────────────────────────────────
+const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+function fmtMoney(v) { return fmt.format(v || 0); }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—'; }
+function badge(val) {
+  if (!val) return '<span class="badge badge-pending">—</span>';
+  return `<span class="badge badge-${val.toLowerCase().replace('_','-')}">${val}</span>`;
+}
+function stars(rating) {
+  const r = Math.round(rating);
+  return `<span class="stars">${'★'.repeat(r)}${'☆'.repeat(5-r)}</span> <span class="mono">${Number(rating).toFixed(1)}</span>`;
+}
+function filterTable(tbodyId, q) {
+  const rows = document.querySelectorAll(`#${tbodyId} tr`);
+  const ql = q.toLowerCase();
+  rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(ql) ? '' : 'none');
+}
+function loading(id) { document.getElementById(id).innerHTML = `<tr><td colspan="20"><div class="loading"><div class="spinner"></div>Loading…</div></td></tr>`; }
+
+// ── Topbar time ───────────────────────────────────
+function updateTime() {
+  document.getElementById('topbar-meta').textContent =
+    new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    + ' · ecommerce_oms';
+}
+setInterval(updateTime, 1000); updateTime();
+
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const d = await api('/stats');
+    const grid = document.getElementById('stats-grid');
+    grid.innerHTML = `
+      <div class="stat-card blue">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">${d.customers}</div>
+        <div class="stat-label">Total Customers</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value">${d.products}</div>
+        <div class="stat-label">Products</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">🛒</div>
+        <div class="stat-value">${d.orders}</div>
+        <div class="stat-label">Total Orders</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value">${fmtMoney(d.revenue)}</div>
+        <div class="stat-label">Revenue (Successful)</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value">${d.pendingOrders}</div>
+        <div class="stat-label">Pending Orders</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-value">${d.lowStock}</div>
+        <div class="stat-label">Low Stock (&lt;100)</div>
+      </div>
+    `;
+
+    // Recent orders
+    const tbody = document.getElementById('recent-orders-tbody');
+    tbody.innerHTML = d.recentOrders.map(o => `
+      <tr>
+        <td class="mono">#${o.order_id}</td>
+        <td>${o.customer}</td>
+        <td>${fmtMoney(o.total_amount)}</td>
+        <td>${badge(o.status)}</td>
+      </tr>`).join('');
+
+    // Top products bar chart
+    const perf = await api('/analytics/product-performance');
+    const maxSold = Math.max(...perf.map(p => p.units_sold), 1);
+    document.getElementById('top-products-bars').innerHTML = perf.slice(0,8).map(p => `
+      <div class="bar-row">
+        <div class="bar-label" title="${p.product_name}">${p.product_name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(p.units_sold/maxSold*100).toFixed(1)}%"></div></div>
+        <div class="bar-val">${p.units_sold} sold</div>
+      </div>`).join('');
+  } catch(e) { toast('Failed to load dashboard: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// ORDERS
+// ══════════════════════════════════════════════════
+async function loadOrders() {
+  loading('orders-tbody');
+  try {
+    const orders = await api('/orders');
+    document.getElementById('orders-tbody').innerHTML = orders.map(o => `
+      <tr>
+        <td class="mono">#${o.order_id}</td>
+        <td><div style="font-weight:500">${o.customer_name}</div><div class="mono">${o.email}</div></td>
+        <td class="mono">${fmtDate(o.order_date)}</td>
+        <td style="font-weight:600">${fmtMoney(o.total_amount)}</td>
+        <td>${badge(o.payment_status)} <span class="mono" style="font-size:10px">${o.payment_method||''}</span></td>
+        <td>${badge(o.shipment_status)}</td>
+        <td>
+          <select class="status-select" onchange="updateOrderStatus(${o.order_id},this.value)">
+            ${['PENDING','CONFIRMED','SHIPPED','DELIVERED','CANCELLED'].map(s =>
+              `<option value="${s}" ${s===o.status?'selected':''}>${s}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td><button class="btn btn-ghost btn-sm" onclick="viewOrderItems(${o.order_id})">Items</button></td>
+      </tr>`).join('');
+  } catch(e) { toast('Failed to load orders: ' + e.message, 'error'); }
+}
+
+async function updateOrderStatus(orderId, status) {
+  try {
+    await api(`/orders/${orderId}/status`, { method:'PATCH', body: JSON.stringify({ status }) });
+    toast(`Order #${orderId} updated to ${status}`);
+  } catch(e) { toast('Update failed: ' + e.message, 'error'); }
+}
+
+async function viewOrderItems(orderId) {
+  try {
+    const items = await api(`/orders/${orderId}/items`);
+    const content = items.map(i => `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:500">${i.product_name}</div><div class="mono">Qty: ${i.quantity}</div></div>
+        <div style="font-weight:600">${fmtMoney(i.price_at_purchase * i.quantity)}</div>
+      </div>`).join('');
+    showInfoModal(`Order #${orderId} — Items`, content || '<p style="color:var(--muted)">No items</p>');
+  } catch(e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+function showInfoModal(title, html) {
+  const m = document.createElement('div');
+  m.className = 'modal-overlay open';
+  m.innerHTML = `<div class="modal"><div class="modal-title">${title}</div>${html}
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Close</button></div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if(e.target===m) m.remove(); });
+}
+
+async function populateOrderModal() {
+  const [products, discounts] = await Promise.all([api('/products'), api('/discounts')]);
+  document.getElementById('o-product').innerHTML =
+    products.map(p => `<option value="${p.product_id}">${p.name} — ${fmtMoney(p.price)}</option>`).join('');
+  const dd = document.getElementById('o-discount');
+  dd.innerHTML = '<option value="">— No Discount —</option>' +
+    discounts.map(d => `<option value="${d.discount_id}">${d.code} (${d.discount_pct}% off)</option>`).join('');
+}
+
+async function placeOrder() {
+  try {
+    const body = {
+      customer_id: +document.getElementById('o-cid').value,
+      address_id:  1,
+      discount_id: document.getElementById('o-discount').value || null,
+      product_id:  +document.getElementById('o-product').value,
+      quantity:    +document.getElementById('o-qty').value,
+      method:      document.getElementById('o-method').value,
+    };
+    const res = await api('/orders/place', { method:'POST', body: JSON.stringify(body) });
+    closeModal('modal-order');
+    toast(res.message);
+    loadOrders();
+  } catch(e) { toast('Order failed: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// CUSTOMERS
+// ══════════════════════════════════════════════════
+async function loadCustomers() {
+  loading('customers-tbody');
+  try {
+    const customers = await api('/customers');
+    document.getElementById('customers-tbody').innerHTML = customers.map(c => `
+      <tr>
+        <td class="mono">${c.customer_id}</td>
+        <td><div style="font-weight:500">${c.first_name} ${c.last_name}</div></td>
+        <td class="mono">${c.email}</td>
+        <td class="mono">${c.phone || '—'}</td>
+        <td><span style="font-weight:600">${c.total_orders}</span></td>
+        <td style="font-weight:600;color:var(--green)">${fmtMoney(c.lifetime_value)}</td>
+        <td class="mono">${fmtDate(c.created_at)}</td>
+      </tr>`).join('');
+  } catch(e) { toast('Failed to load customers: ' + e.message, 'error'); }
+}
+
+async function addCustomer() {
+  try {
+    await api('/customers', { method:'POST', body: JSON.stringify({
+      first_name: document.getElementById('c-fname').value,
+      last_name:  document.getElementById('c-lname').value,
+      email:      document.getElementById('c-email').value,
+      phone:      document.getElementById('c-phone').value,
+    })});
+    closeModal('modal-customer');
+    toast('Customer added successfully!');
+    loadCustomers();
+  } catch(e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// PRODUCTS
+// ══════════════════════════════════════════════════
+async function loadProducts() {
+  loading('products-tbody');
+  try {
+    const products = await api('/products');
+    document.getElementById('products-tbody').innerHTML = products.map(p => `
+      <tr>
+        <td class="mono">${p.product_id}</td>
+        <td>
+          <div style="font-weight:500">${p.name}</div>
+          <div class="mono" style="font-size:11px">${p.description ? p.description.slice(0,50)+'…' : ''}</div>
+        </td>
+        <td>${p.category_name || '—'}</td>
+        <td style="font-weight:600">${fmtMoney(p.price)}</td>
+        <td>
+          <span style="font-weight:600;color:${p.stock_qty<100?'var(--amber)':'var(--green)'}">${p.stock_qty}</span>
+          ${p.stock_qty < 100 ? '<span style="font-size:10px;color:var(--amber)"> ⚠️</span>' : ''}
+        </td>
+        <td>${p.avg_rating > 0 ? stars(p.avg_rating) : '<span class="mono" style="color:var(--muted)">No reviews</span>'}</td>
+        <td class="mono">${p.supplier_name || '—'}</td>
+      </tr>`).join('');
+  } catch(e) { toast('Failed to load products: ' + e.message, 'error'); }
+}
+
+async function populateProductModal() {
+  const cats = await api('/categories');
+  document.getElementById('p-category').innerHTML = cats.map(c => `<option value="${c.category_id}">${c.name}</option>`).join('');
+}
+
+async function addProduct() {
+  try {
+    await api('/products', { method:'POST', body: JSON.stringify({
+      name:        document.getElementById('p-name').value,
+      description: document.getElementById('p-desc').value,
+      price:       +document.getElementById('p-price').value,
+      stock_qty:   +document.getElementById('p-stock').value,
+      category_id: +document.getElementById('p-category').value,
+      supplier_id: +document.getElementById('p-supplier').value || null,
+    })});
+    closeModal('modal-product');
+    toast('Product added!');
+    loadProducts();
+  } catch(e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// REVIEWS
+// ══════════════════════════════════════════════════
+async function loadReviews() {
+  loading('reviews-tbody');
+  try {
+    const reviews = await api('/reviews');
+    document.getElementById('reviews-tbody').innerHTML = reviews.map(r => `
+      <tr>
+        <td class="mono">${r.review_id}</td>
+        <td style="font-weight:500">${r.customer_name}</td>
+        <td>${r.product_name}</td>
+        <td>${stars(r.rating)}</td>
+        <td style="max-width:260px;white-space:normal">${r.comment || '—'}</td>
+        <td class="mono">${fmtDate(r.reviewed_at)}</td>
+      </tr>`).join('');
+  } catch(e) { toast('Failed to load reviews: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════════
+async function loadAnalytics() {
+  try {
+    const [perf, custSum, revenue] = await Promise.all([
+      api('/analytics/product-performance'),
+      api('/analytics/customer-summary'),
+      api('/analytics/monthly-revenue'),
+    ]);
+
+    document.getElementById('perf-tbody').innerHTML = perf.map(p => `
+      <tr>
+        <td style="font-weight:500">${p.product_name}</td>
+        <td class="mono">${p.category || '—'}</td>
+        <td>${fmtMoney(p.price)}</td>
+        <td><span style="font-weight:700;color:var(--accent)">${p.units_sold}</span></td>
+        <td>${p.avg_rating > 0 ? stars(p.avg_rating) : '<span class="mono" style="color:var(--muted)">—</span>'}</td>
+      </tr>`).join('');
+
+    document.getElementById('custsum-tbody').innerHTML = custSum.map(c => `
+      <tr>
+        <td><div style="font-weight:500">${c.customer_name}</div><div class="mono">${c.email}</div></td>
+        <td style="font-weight:600">${c.total_orders}</td>
+        <td style="font-weight:600;color:var(--green)">${fmtMoney(c.lifetime_value)}</td>
+      </tr>`).join('');
+
+    const maxRev = Math.max(...revenue.map(r => r.revenue), 1);
+    document.getElementById('revenue-bars').innerHTML = revenue.length
+      ? revenue.map(r => `
+        <div class="bar-row">
+          <div class="bar-label">${r.month}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(r.revenue/maxRev*100).toFixed(1)}%"></div></div>
+          <div class="bar-val">${fmtMoney(r.revenue)}</div>
+        </div>`).join('')
+      : '<div class="empty"><div class="empty-text">No revenue data yet</div></div>';
+
+  } catch(e) { toast('Analytics failed: ' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// SHIPMENTS
+// ══════════════════════════════════════════════════
+async function loadShipments() {
+  loading('shipments-tbody');
+  try {
+    const rows = await api('/analytics/pending-shipments');
+    if (!rows.length) {
+      document.getElementById('shipments-tbody').innerHTML =
+        `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🚚</div><div class="empty-text">No active shipments</div></div></td></tr>`;
+      return;
+    }
+    document.getElementById('shipments-tbody').innerHTML = rows.map(r => `
+      <tr>
+        <td class="mono">#${r.order_id}</td>
+        <td style="font-weight:500">${r.customer_name}</td>
+        <td class="mono">${fmtDate(r.order_date)}</td>
+        <td style="font-weight:600">${fmtMoney(r.total_amount)}</td>
+        <td>${r.carrier || '—'}</td>
+        <td class="mono">${r.tracking_no || '—'}</td>
+        <td>${badge(r.shipment_status)}</td>
+      </tr>`).join('');
+  } catch(e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+// ── Boot ──────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
